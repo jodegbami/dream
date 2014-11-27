@@ -421,7 +421,8 @@ class Machine(CoreObject):
         # get the operation time, tinMStarts holds the processing time of the machine
         self.totalOperationTimeInCurrentEntity=self.calculateTime(type)
         # timer to hold the operation time left
-        self.tinM=self.totalOperationTimeInCurrentEntity                                          
+        self.tinM=self.totalOperationTimeInCurrentEntity             
+        self.timeToEndCurrentOperation=self.env.now+self.tinM                               
         # variables used to flag any interruptions and the end of the processing
         self.interruption=False
         # local variable that is used to check whether the operation is concluded
@@ -466,6 +467,9 @@ class Machine(CoreObject):
                 assert eventTime==self.env.now, 'the interruption has not been processed on the time of activation'
                 self.interruptionStart=self.env.event()
                 self.interruptionActions(type)                      # execute interruption actions
+                if float(self.timeToEndCurrentOperation)==float(self.env.now) and self.canDeliverOnInterruption:
+                    self.isBlocked=False
+                    break          
                 #===========================================================
                 # # release the operator if there is interruption 
                 #===========================================================
@@ -727,7 +731,7 @@ class Machine(CoreObject):
             #===================================================================
             #===================================================================
             #===================================================================
-            
+
             # signal the receiver that the activeObject has something to dispose of
             if not self.signalReceiver():
             # if there was no available receiver, get into blocking control
@@ -735,6 +739,35 @@ class Machine(CoreObject):
                 while 1:
                     if not len(self.getActiveObjectQueue()):
                         break
+                    if (self.Up==False or self.onShift==False) and self.canDeliverOnInterruption:
+                        self.signalReceiver()
+                        # loop until we reach at a state that there is no interruption
+                        while 1:
+                            self.isBlocked=False
+                            self.expectedSignals['interruptionEnd']=1
+                            if not self.canDeliverOnInterruption:
+                                receivedEvent=yield self.interruptionEnd         # interruptionEnd to be triggered by ObjectInterruption
+                            # if the object canDeliverOnInterruption then it has to wait also for canDispose
+                            else:
+                                self.expectedSignals['canDispose']=1
+                                receivedEvent=yield self.env.any_of([self.canDispose , self.interruptionEnd])
+                            # if we have interruption end
+                            if (self.interruptionEnd in receivedEvent) or (not self.canDeliverOnInterruption):    
+                                transmitter, eventTime=self.interruptionEnd.value
+                                assert eventTime==self.env.now, 'the victim of the failure is not the object that received it'
+                                self.interruptionEnd=self.env.event()
+                                # if there is no other interruption
+                                if self.Up and self.onShift:
+                                    # Machine is back to blocked state
+                                    self.isBlocked=True
+                                    break
+                            # else signalReceiver and continue
+                            elif (self.canDispose in receivedEvent) and self.canDeliverOnInterruption:
+                                transmitter, eventTime=self.canDispose.value
+                                assert eventTime==self.env.now,'canDispose signal is late'
+                                self.canDispose=self.env.event()
+                                self.signalReceiver()
+                                break
                     self.expectedSignals['interruptionStart']=1
                     self.expectedSignals['canDispose']=1
                     self.timeLastBlockageStarted=self.env.now       # blockage is starting
@@ -895,7 +928,8 @@ class Machine(CoreObject):
         # if object was processing add the working time
         # only if object is not preempting though
         # in case of preemption endProcessingActions will be called
-        if self.isProcessing and not self.shouldPreempt:
+        if self.isProcessing and (not self.shouldPreempt) and\
+             not (self.timeToEndCurrentOperation==self.env.now and self.canDeliverOnInterruption):
             self.totalOperationTime+=self.env.now-self.timeLastOperationStarted
             if type=='Processing':
                 self.totalWorkingTime=self.totalOperationTime
@@ -914,6 +948,7 @@ class Machine(CoreObject):
             # recalculate the processing time left tinM
             if self.timeLastOperationStarted>=0:
                 self.tinM=self.tinM-(self.env.now-self.timeLastOperationStarted)
+                self.timeToEndCurrentOperation=self.env.now+self.tinM
                 if(self.tinM==0):       # sometimes the failure may happen exactly at the time that the processing would finish
                                         # this may produce disagreement with the simul8 because in both SimPy and Simul8
                                         # it seems to be random which happens 1st
