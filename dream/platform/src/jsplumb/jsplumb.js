@@ -329,6 +329,7 @@
 
   function removeElement(gadget, node_id) {
     console.log("removeELEMENT 1");
+
     var element_id = gadget.props.node_id_to_dom_element_id[node_id];
     gadget.props.jsplumb_instance.removeAllEndpoints(
       $(gadget.props.element).find("#" + element_id)
@@ -338,11 +339,14 @@
     delete gadget.props.data.graph.node[node_id];
     //delete gadget.props.data.graph.main_graph.node[node_id];
 
+    delete gadget.props.node_id_to_dom_element_id[node_id];
+
     console.log("removeELEMENT 3");
     //$.each(gadget.props.data.graph.main_graph.node, function (k, v) {
     $.each(gadget.props.data.graph.edge, function (k, v) {
       if (node_id === v.source || node_id === v.destination) {
-        delete gadget.props.data.graph.main_graph.node[k];
+        delete gadget.props.data.graph.main_graph.edge[k];
+        //delete gadget.props.data.graph.main_graph.node[k];
       }
     });
 
@@ -601,7 +605,7 @@
         delete gadget.props.dialog_promise;
       });
   }
-
+  //function waitForNodeClick(gadget, node, config_dict) {
   function waitForNodeClick(gadget, node) {
     console.log("waitFORNODEclick 1");
     gadget.props.nodes_click_monitor
@@ -610,6 +614,7 @@
         'dblclick',
         false,
         openNodeDialog.bind(null, gadget, node)
+        //openNodeDialog.bind(null, gadget, node, config_dict)
       ));
   }
 
@@ -663,6 +668,7 @@
     render_element.append(domElement);
     console.log("addNODE 5");
     waitForNodeClick(gadget, domElement);
+    //waitForNodeClick(gadget, domElement, class_definition);
 
     box = $(gadget.props.element).find("#" + dom_element_id);
     absolute_position = convertToAbsolutePosition(
