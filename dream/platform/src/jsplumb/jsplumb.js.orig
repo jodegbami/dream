@@ -107,7 +107,7 @@
     });
     console.log("getNODEID 2");
     console.log(node_id);
-    console.log(gadget.props.data.graph.node);
+    console.log(gadget.props.data.graph.main_graph.node);
     return node_id;
   }
 
@@ -116,10 +116,11 @@
     // Generate a node id
     var n = 1,
       class_def = gadget.props.data.class_definition[element._class],
-      id = class_def.allOf[1].properties.id.default || element._class;
-    while (gadget.props.data.graph.node[id + n] !== undefined) {
+      id = class_def.allOf[1].properties.id._default || element._class;
+    while (gadget.props.data.graph.main_graph.node[id + n] !== undefined) {
       n += 1;
     }
+    console.log("generateNODEID 2");
     return id + n;
   }
 
@@ -134,14 +135,22 @@
 
   function updateConnectionData(gadget, connection, remove, edge_data) {
     if (remove) {
+<<<<<<< HEAD
       delete gadget.props.data.graph.edge[connection.id];
       //delete gadget.props.data.graph.main_graph.node[connection.id];
+=======
+      delete gadget.props.data.graph.main_graph.edge[connection.id];
+>>>>>>> Graphic editor: previous mistake corrected node->edge. removeElement corrected - node_id_to_dom_element_id updated correctly on element remove
     } else {
       edge_data = edge_data || {'_class': 'Dream.Edge'};
       edge_data.source = getNodeId(gadget, connection.sourceId);
       edge_data.destination = getNodeId(gadget, connection.targetId);
+<<<<<<< HEAD
       gadget.props.data.graph.edge[connection.id] = edge_data;
       //gadget.props.data.graph.main_graph.node[connection.id] = edge_data;
+=======
+      gadget.props.data.graph.main_graph.edge[connection.id] = edge_data;
+>>>>>>> Graphic editor: previous mistake corrected node->edge. removeElement corrected - node_id_to_dom_element_id updated correctly on element remove
     }
     gadget.notifyDataChanged();
   }
@@ -341,11 +350,14 @@
     delete gadget.props.node_id_to_dom_element_id[node_id];
 
     console.log("removeELEMENT 3");
+<<<<<<< HEAD
     //$.each(gadget.props.data.graph.main_graph.node, function (k, v) {
     $.each(gadget.props.data.graph.edge, function (k, v) {
+=======
+    $.each(gadget.props.data.graph.main_graph.edge, function (k, v) {
+>>>>>>> Graphic editor: previous mistake corrected node->edge. removeElement corrected - node_id_to_dom_element_id updated correctly on element remove
       if (node_id === v.source || node_id === v.destination) {
-        delete gadget.props.data.graph.edge[k];
-        //delete gadget.props.data.graph.main_graph.node[k];
+        delete gadget.props.data.graph.main_graph.edge[k];
       }
     });
 
@@ -377,16 +389,20 @@
         = gadget.props.data.graph.node[node_id];
       delete gadget.props.data.graph.node[node_id];
 
-      console.log("updateELEMENTDATA 4");
       gadget.props.node_id_to_dom_element_id[new_id]
         = gadget.props.node_id_to_dom_element_id[node_id];
       delete gadget.props.node_id_to_dom_element_id[node_id];
 
       console.log("updateELEMENTDATA 5");
+<<<<<<< HEAD
       //delete gadget.props.data.graph.main_graph.node[new_id].id;
       //$.each(gadget.props.data.graph.main_graph.node, function (k, v) {
       delete gadget.props.data.graph.node[new_id].id;
       $.each(gadget.props.data.graph.edge, function (k, v) {
+=======
+      delete gadget.props.data.graph.main_graph.node[new_id].id;
+      $.each(gadget.props.data.graph.main_graph.edge, function (k, v) {
+>>>>>>> Graphic editor: previous mistake corrected node->edge. removeElement corrected - node_id_to_dom_element_id updated correctly on element remove
         if (v.source === node_id) {
           v.source = new_id;
         }
@@ -459,8 +475,7 @@
     var property, referenced, i,
       expanded_class_definition = {properties:
         class_definition.properties || {}},
-      ref_word_list, ref_word, ref_definition_list,
-      ref_definition_word, ref_definition;
+      ref_word_list, ref_word;
     if (class_definition.allOf) {
       for (i = 0; i < class_definition.allOf.length; i += 1) {
         referenced = class_definition.allOf[i];
@@ -474,32 +489,16 @@
         if (referenced.properties) {
           for (property in referenced.properties) {
             if (referenced.properties.hasOwnProperty(property)) {
-              if (referenced.properties[property].type || 
-                  referenced.properties[property].$ref) {
-                console.log("..");
-                console.log(property);
-                if (referenced.properties[property].$ref) {
-                  ref_definition_list
-                    = referenced.properties[property].$ref.split("/");
-                  ref_definition_word
-                    = ref_definition_list[ref_definition_list.length-1];
-                  ref_definition
-                    = full_schema.class_definition
-                                 .definitions[ref_definition_word];
-                  expanded_class_definition.properties[property]
-                    = ref_definition;
-                } else {
-                  expanded_class_definition.properties[property]
-                    = referenced.properties[property];
-                }
+              if (referenced.properties[property].type) {
+                expanded_class_definition.properties[property]
+                  = referenced.properties[property];
               }
             }
           }
         }
       }
     }
-    console.log("expandSCHEMA 2");
-    console.log(expanded_class_definition);
+    console.log("expandSCHEMA 1");
     return expanded_class_definition;
   }
 
@@ -507,6 +506,7 @@
   // TODO: remove class_definition from this function and callees signature
   //function openNodeDialog(gadget, element, class_definition) {
     console.log("openNODEDIALOG 1");
+    console.log(class_definition);
     var node_id = getNodeId(gadget, element.id),
       //node_data = gadget.props.data.graph.main_graph.node[node_id],
       node_data = gadget.props.data.graph.node[node_id],
@@ -514,7 +514,7 @@
       schema,
       fieldset_element,
       delete_promise;
-    console.log(node_data);
+    
     // If we have no definition for this, we do not allow edition.
     console.log("openNODEDIALOG 1.1");
     //TODO: node_data._class may not exist
@@ -535,19 +535,18 @@
     gadget.props.element.appendChild(
       document.importNode(popup_edit_template.content, true).children[0]
     );
-
+    console.log("openNODEDIALOG 1.3");
     node_edit_popup = $(gadget.props.element).find('#node-edit-popup');
     console.log("openNODEDIALOG 1.35");
     console.log(node_edit_popup);
     console.log(node_edit_popup.find(".node_class"));
-    console.log(gadget.props.data.graph.node);
+    console.log(gadget.props.data.graph.main_graph.node);
     console.log(node_data);
     console.log(node_edit_popup.find(".node_class").text(node_data._class));
     // Set the name of the popup to the node class
     node_edit_popup.find('.node_class').text(node_data._class);
     console.log("openNODEDIALOG 1.4");
     fieldset_element = node_edit_popup.find('fieldset')[0];
-
     console.log("openNODEDIALOG 1.5");
     node_edit_popup.popup();
 
@@ -621,7 +620,7 @@
         delete gadget.props.dialog_promise;
       });
   }
-  //function waitForNodeClick(gadget, node, config_dict) {
+
   function waitForNodeClick(gadget, node) {
     console.log("waitFORNODEclick 1");
     gadget.props.nodes_click_monitor
@@ -630,7 +629,6 @@
         'dblclick',
         false,
         openNodeDialog.bind(null, gadget, node)
-        //openNodeDialog.bind(null, gadget, node, config_dict)
       ));
   }
 
@@ -684,7 +682,6 @@
     render_element.append(domElement);
     console.log("addNODE 5");
     waitForNodeClick(gadget, domElement);
-    //waitForNodeClick(gadget, domElement, class_definition);
 
     box = $(gadget.props.element).find("#" + dom_element_id);
     absolute_position = convertToAbsolutePosition(
@@ -798,7 +795,6 @@
       console.log("RENDEERING WORKFLOW EDITOR1");
       this.props.data = JSON.parse(data);
       this.props.jsplumb_instance = jsPlumb.getInstance();
-      console.log(this.props.data);
       console.log("RENDEERING WORKFLOW EDITOR3");
       // XXX data loading is done in startService
       /*
@@ -820,6 +816,7 @@
       var gadget = this,
         jsplumb_instance = gadget.props.jsplumb_instance;
       this.props.main = this.props.element.querySelector('#main');
+
       jsplumb_instance.setRenderMode(jsplumb_instance.SVG);
       jsplumb_instance.importDefaults({
         HoverPaintStyle: {
@@ -839,7 +836,9 @@
         ],
         Container: this.props.main
       });
+
       draggable(gadget);
+
       this.props.nodes_click_monitor = RSVP.Monitor();
       // load the data
       //$.each(this.props.data.graph.main_graph.node, function (key, value) {
@@ -850,7 +849,7 @@
       $.each(this.props.data.graph.edge, function (key, value) {
         addEdge(gadget, key, value);
       });
-      console.log("startservice WORKFLOW EDITOR7");
+      console.log("startservice WORKFLOW EDITOR2");
 
       return RSVP.all([
         waitForDrop(gadget),

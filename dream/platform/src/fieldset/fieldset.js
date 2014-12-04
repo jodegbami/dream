@@ -1,5 +1,5 @@
 /*global rJS, RSVP, jQuery, Handlebars,
-  promiseEventListener, initGadgetMixin*/
+  promiseEventListener, initGadgetMixin, console */
 /*jslint nomen: true */
 (function (window, rJS, RSVP, Handlebars, initGadgetMixin) {
   "use strict";
@@ -23,10 +23,14 @@
       var gadget = this,
         queue;
 
+      console.log("FIELDSET RENDER 1");
+      console.log(options);
+      console.log(node_id);
       gadget.props.key = options.key; // used for recursive fieldsets
       gadget.props.field_gadget_list = [];
 
-      function addField(property_id, property_definition, value) {
+      function addField(property_id, property_definition,
+                                     value) { //, extra) {
         var sub_gadget;
         queue
           .push(function () {
@@ -39,14 +43,25 @@
                 "name": (property_definition.name || property_id)
               })
             );
+            /*console.log("....................");
+            console.log(property_id);
+            console.log(property_definition);
+            console.log(value);
+            if (property_definition.allOf) {
+              console.log("allOf");
+            }
+            console.log("&&&&&&&&&&&&&&&&&&&&&&&");*/
             if (property_definition.type === "object") {
+              //console.log("object");
               // Create a recursive fieldset for this key.
               return gadget.declareGadget("../fieldset/index.html");
             }
             if (property_definition.type === "number") {
+              //console.log("number");
               return gadget.declareGadget("../number_field/index.html");
             }
             if (property_definition.enum) {
+              //console.log("enum");
               return gadget.declareGadget("../list_field/index.html");
             }
             return gadget.declareGadget("../string_field/index.html");
@@ -70,18 +85,39 @@
 
       queue = new RSVP.Queue()
         .push(function () {
+          //console.log("FIELDSET RENDER 2");
           if (node_id) {
             addField('id', {'type': 'string'}, node_id);
           }
+          //console.log("FIELDSET RENDER 3");
           Object.keys(options.property_definition.properties
             ).forEach(function (property_name) {
+            //console.log("..");
+            //console.log(property_name);
             var property_definition =
               options.property_definition.properties[property_name],
               value = (options.value || {})[property_name] === undefined
-              ? property_definition._default : options.value[property_name];
-            // XXX some properties are not editable
-            if (property_name !== 'coordinate' && property_name !== '_class') {
-              addField(property_name, property_definition, value);
+              ? property_definition.default : options.value[property_name],
+              i=0, property;
+            if (property_definition.allOf) {
+              if (property_definition.allOf[0].properties) {
+                for (property in property_definition
+                                 .allOf[0].properties) {
+                  if (property_definition.allOf[0].properties
+                                                  .hasOwnProperty(property)) {
+                    i += 1;
+                    if (i > 1) {console.log("something is wrong!");}
+                    value = property_definition.allOf[0]
+                            .properties[property].default;
+                  }
+                }
+              }
+            }
+            if (property_name !== 'coordinate' && property_name !== '_class' &&
+                                                  property_name !== 'id') {
+              console.log("=============");
+              console.log(property_name);
+              addField(property_name, property_definition, value);//, extra);
             }
           });
         });
