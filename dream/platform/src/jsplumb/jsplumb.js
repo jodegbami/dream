@@ -456,11 +456,13 @@
     // references
     // TODO: check for a library that would provide full support
     console.log("expandSCHEMA 1");
-    var property, referenced, i,
+    var property, referenced, i, j, len,
       expanded_class_definition = {properties:
         class_definition.properties || {}},
       ref_word_list, ref_word, ref_definition_list,
-      ref_definition_word, ref_definition;
+      ref_definition_word, ref_definition,
+      sub_ref_def, sub_ref_def_list,
+      sub_ref_def_word, sub_ref_def_root;
     if (class_definition.allOf) {
       for (i = 0; i < class_definition.allOf.length; i += 1) {
         referenced = class_definition.allOf[i];
@@ -471,7 +473,10 @@
             full_schema.class_definition[ref_word],
             full_schema);
         }
+        console.log(full_schema.class_definition.definitions);
         if (referenced.properties) {
+          console.log("[[[[[[[[[[]]]]]]]]]]");
+          console.log(referenced.properties);
           for (property in referenced.properties) {
             if (referenced.properties.hasOwnProperty(property)) {
               if (referenced.properties[property].type || 
@@ -486,8 +491,35 @@
                   ref_definition
                     = full_schema.class_definition
                                  .definitions[ref_definition_word];
+                  console.log("(((((((())))))))");
+                  console.log(ref_definition);
+                  if (ref_definition.allOf) {
+                    if (ref_definition.allOf[1].oneOf) {
+                      len = ref_definition.allOf[1].oneOf.length - 1;
+                      for (j = 0; j <= len; j += 1) {
+                        console.log("--------- " + j);
+                        console.log(ref_definition.allOf[1].oneOf[j]);
+                        if (ref_definition.allOf[1]
+                                          .oneOf[j].$ref) {
+                          sub_ref_def_list = ref_definition.allOf[1]
+                                               .oneOf[j].$ref.split("/");
+                          console.log(">>>>>>");
+                          sub_ref_def_word
+                            = sub_ref_def_list[sub_ref_def_list.length-1];
+                          sub_ref_def_root
+                            = sub_ref_def_list[sub_ref_def_list.length-2];
+                          sub_ref_def = full_schema.class_definition
+                            .definitions[sub_ref_def_root][sub_ref_def_word];
+                          console.log(sub_ref_def);
+                          ref_definition.allOf[1].oneOf[j] = sub_ref_def;
+                        }
+                      }
+                    }
+                  }
                   expanded_class_definition.properties[property]
                     = ref_definition;
+                  console.log("for property " + property + ", definition:");
+                  console.log(ref_definition);
                 } else {
                   expanded_class_definition.properties[property]
                     = referenced.properties[property];
