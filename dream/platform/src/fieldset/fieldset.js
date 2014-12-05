@@ -30,12 +30,13 @@
       gadget.props.field_gadget_list = [];
 
       function addField(property_id, property_definition,
-                                     value) { //, extra) {
-        var sub_gadget;
+                                     value) {
+        var sub_gadget, temp_property_def;
         queue
           .push(function () {
             // XXX this is incorrect for recursive fieldsets.
             // we should use nested fieldset with legend
+            console.log("insertingAdjacentHTML for:" + property_id);
             gadget.props.element.insertAdjacentHTML(
               'beforeend',
               label_template({
@@ -43,31 +44,38 @@
                 "name": (property_definition.name || property_id)
               })
             );
-            /*console.log("....................");
+            console.log("....................");
             console.log(property_id);
             console.log(property_definition);
             console.log(value);
             if (property_definition.allOf) {
-              console.log("allOf");
+              if (property_definition.allOf[0].type) {
+                delete property_definition.allOf[0].type;
+              }
+              temp_property_def = property_definition.allOf[0];
+              return gadget.declareGadget("../fieldset/index.html");
             }
-            console.log("&&&&&&&&&&&&&&&&&&&&&&&");*/
             if (property_definition.type === "object") {
-              //console.log("object");
               // Create a recursive fieldset for this key.
               return gadget.declareGadget("../fieldset/index.html");
             }
             if (property_definition.type === "number") {
-              //console.log("number");
               return gadget.declareGadget("../number_field/index.html");
             }
             if (property_definition.enum) {
-              //console.log("enum");
               return gadget.declareGadget("../list_field/index.html");
             }
             return gadget.declareGadget("../string_field/index.html");
           })
           .push(function (gg) {
             sub_gadget = gg;
+            if (temp_property_def) {
+              return sub_gadget.render({
+                key: property_id,
+                value: value,
+                property_definition: temp_property_def
+              });
+            }
             return sub_gadget.render({
               key: property_id,
               value: value,
@@ -85,20 +93,18 @@
 
       queue = new RSVP.Queue()
         .push(function () {
-          //console.log("FIELDSET RENDER 2");
           if (node_id) {
             addField('id', {'type': 'string'}, node_id);
           }
-          //console.log("FIELDSET RENDER 3");
           Object.keys(options.property_definition.properties
             ).forEach(function (property_name) {
-            //console.log("..");
-            //console.log(property_name);
             var property_definition =
               options.property_definition.properties[property_name],
-              value = (options.value || {})[property_name] === undefined
-              ? property_definition.default : options.value[property_name],
+              value = property_definition.default,
               i=0, property;
+            console.log("******************");
+            console.log(property_name);
+            console.log(property_definition);
             if (property_definition.allOf) {
               if (property_definition.allOf[0].properties) {
                 for (property in property_definition
@@ -113,11 +119,12 @@
                 }
               }
             }
-            if (property_name !== 'coordinate' && property_name !== '_class' &&
-                                                  property_name !== 'id') {
-              console.log("=============");
-              console.log(property_name);
-              addField(property_name, property_definition, value);//, extra);
+            value = (options.value || {})[property_name] === undefined
+                    ? value : options.value[property_name];
+            if (property_name !== 'coordinate'
+             && property_name !== '_class'
+             && property_name !== 'id') {
+              addField(property_name, property_definition, value);
             }
           });
         });
