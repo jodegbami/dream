@@ -97,17 +97,11 @@
     // returns the ID of the node in the graph from its DOM element id
     var node_id;
     $.each(gadget.props.node_id_to_dom_element_id, function (k, v) {
-      console.log(k);
-      console.log(v);
-      console.log(element_id);
       if (v === element_id) {
         node_id = k;
         return false;
       }
     });
-    console.log("getNODEID 2");
-    console.log(node_id);
-    console.log(gadget.props.data.graph.node);
     return node_id;
   }
 
@@ -207,10 +201,8 @@
       element,
       relative_position;
 
-    console.log("updateELEMENTCOORDINATE 2");
     if (coordinate === undefined) {
       element = $(gadget.props.element).find("#" + element_id);
-      console.log("updateELEMENTCOORDINATE 3");
       relative_position = convertToRelativePosition(
         gadget,
         element.css('left'),
@@ -220,13 +212,11 @@
         left: relative_position[0],
         top: relative_position[1]
       };
-      console.log("updateELEMENTCOORDINATE 4");
     }
 
     //gadget.props.data.graph.main_graph.node[node_id].coordinate = coordinate;
     gadget.props.data.graph.node[node_id].coordinate = coordinate;
     gadget.notifyDataChanged();
-    console.log("updateELEMENTCOORDINATE 5");
     return coordinate;
   }
 
@@ -333,14 +323,12 @@
     gadget.props.jsplumb_instance.removeAllEndpoints(
       $(gadget.props.element).find("#" + element_id)
     );
-    console.log("removeELEMENT 2");
     $(gadget.props.element).find("#" + element_id).remove();
     delete gadget.props.data.graph.node[node_id];
     //delete gadget.props.data.graph.main_graph.node[node_id];
 
     delete gadget.props.node_id_to_dom_element_id[node_id];
 
-    console.log("removeELEMENT 3");
     //$.each(gadget.props.data.graph.main_graph.node, function (k, v) {
     $.each(gadget.props.data.graph.edge, function (k, v) {
       if (node_id === v.source || node_id === v.destination) {
@@ -355,10 +343,6 @@
 
   function updateElementData(gadget, node_id, data) {
     console.log("updateELEMENTDATA 1");
-    console.log("updateELEMENTDATA 1");
-    console.log(gadget);
-    console.log(node_id);
-    console.log(data);
     var element_id = gadget.props.node_id_to_dom_element_id[node_id],
       new_id = data.id;
     if (data.data.name) {
@@ -368,10 +352,8 @@
       //gadget.props.data.graph.main_graph.node[node_id].name = data.data.name;
       gadget.props.data.graph.node[node_id].name = data.data.name;
     }
-    console.log("updateELEMENTDATA 2");
     delete data.id;
     //$.extend(gadget.props.data.graph.main_graph.node[node_id], data.data);
-    console.log("updateELEMENTDATA 3");
     $.extend(gadget.props.data.graph.node[node_id], data.data);
     if (new_id && new_id !== node_id) {
       //gadget.props.data.graph.main_graph.node[new_id]
@@ -381,12 +363,10 @@
         = gadget.props.data.graph.node[node_id];
       delete gadget.props.data.graph.node[node_id];
 
-      console.log("updateELEMENTDATA 4");
       gadget.props.node_id_to_dom_element_id[new_id]
         = gadget.props.node_id_to_dom_element_id[node_id];
       delete gadget.props.node_id_to_dom_element_id[node_id];
 
-      console.log("updateELEMENTDATA 5");
       //delete gadget.props.data.graph.main_graph.node[new_id].id;
       //$.each(gadget.props.data.graph.main_graph.node, function (k, v) {
       delete gadget.props.data.graph.node[new_id].id;
@@ -398,7 +378,6 @@
           v.destination = new_id;
         }
       });
-      console.log("updateELEMENTDATA 6");
     }
     console.log("updateELEMENTDATA 7");
     gadget.notifyDataChanged();
@@ -550,9 +529,7 @@
       schema,
       fieldset_element,
       delete_promise;
-    console.log(node_data);
     // If we have no definition for this, we do not allow edition.
-    console.log("openNODEDIALOG 1.1");
     //TODO: node_data._class may not exist
     if ( gadget.props.data.class_definition[node_data._class] === undefined ) {
       return;
@@ -567,7 +544,6 @@
       node_edit_popup.remove();
     }
 
-    console.log("openNODEDIALOG 1.2");
     gadget.props.element.appendChild(
       document.importNode(popup_edit_template.content, true).children[0]
     );
@@ -581,16 +557,12 @@
     console.log(node_edit_popup.find(".node_class").text(node_data._class));
     // Set the name of the popup to the node class
     node_edit_popup.find('.node_class').text(node_data._class);
-    console.log("openNODEDIALOG 1.4");
     fieldset_element = node_edit_popup.find('fieldset')[0];
 
-    console.log("openNODEDIALOG 1.5");
     node_edit_popup.popup();
 
-    console.log("openNODEDIALOG 1.6");
     node_data.id = node_id; // XXX
 
-    console.log("openNODEDIALOG 2");
     function save_promise(fieldset_gadget, node_id) {
       return RSVP.Queue()
         .push(function () {
@@ -642,7 +614,7 @@
         console.log("^^^^^^^^^^^^^^^^^^^");
         console.log("^^^^^^^^^^^^^^^^^^^");
         console.log("^^^^^^^^^^^^^^^^^^^");
-        console.log(node_data);
+        console.log(fieldset_gadget);
         console.log("^^^^^^^^^^^^^^^^^^^");
         console.log("^^^^^^^^^^^^^^^^^^^");
         console.log("^^^^^^^^^^^^^^^^^^^");
@@ -652,13 +624,36 @@
                                           node_id)]);
       })
       .push(function (fieldset_gadget) {
-        node_edit_popup.enhanceWithin();
-        node_edit_popup.popup('open');
-        return fieldset_gadget[0];
+        console.log(fieldset_gadget[0]);
+        return RSVP.Queue()
+          .push(function () {
+            console.log(fieldset_gadget[0]);
+            fieldset_gadget[0].startService();
+          })
+          .push(function () {
+            console.log(":::::::::::::::::::");
+            console.log(":::::::::::::::::::");
+            console.log(":::::::::::::::::::");
+            console.log(fieldset_gadget);
+            console.log(":::::::::::::::::::");
+            console.log(":::::::::::::::::::");
+            console.log(":::::::::::::::::::");
+            node_edit_popup.enhanceWithin();
+            node_edit_popup.popup('open');
+            return fieldset_gadget[0];
+          });
       })
       .push(function (fieldset_gadget) {
         // Expose the dialog handling promise so that we can wait for it in
         // test.
+        console.log(":::::::::::::::::::2");
+        console.log(":::::::::::::::::::2");
+        console.log(":::::::::::::::::::2");
+        console.log(fieldset_gadget);
+        // gadget.props.field_gadget_list.push(field_gadget_list);
+        console.log(":::::::::::::::::::2");
+        console.log(":::::::::::::::::::2");
+        console.log(":::::::::::::::::::2");
         gadget.props.dialog_promise = RSVP.any([
           save_promise(fieldset_gadget, node_id),
           delete_promise
@@ -686,7 +681,6 @@
 
   function addNode(gadget, node_id, node_data) {
     console.log("addNODE 0");
-    console.log(node_data);
     var render_element = $(gadget.props.main),
       class_definition = gadget.props.data.class_definition[node_data._class],
       coordinate = node_data.coordinate,
@@ -695,30 +689,22 @@
       absolute_position,
       domElement;
 
-    console.log("addNODE 1");
     dom_element_id = generateDomElementId(gadget.props.element);
     gadget.props.node_id_to_dom_element_id[node_id] = dom_element_id;
 
-    console.log("addNODE 2");
-
     node_data.name = node_data.name || class_definition.name;
-    console.log("addNODE 2.5");
     //gadget.props.data.graph.main_graph.node[node_id] = node_data;
     gadget.props.data.graph.node[node_id] = node_data;
 
-    console.log("addNODE 3");
     if (coordinate === undefined) {
       coordinate = {top: 0, left: 0};
     }
 
-    console.log("addNODE 4");
     node_data.coordinate = updateElementCoordinate(
       gadget,
       node_id,
       coordinate
     );
-    console.log("addNODE 4.5");
-    console.log(node_data);
 
     // XXX make node template an option, or use CSS from class_definition
     /*jslint nomen: true*/
@@ -732,7 +718,6 @@
       "text/html"
     ).querySelector('.window');
     render_element.append(domElement);
-    console.log("addNODE 5");
     waitForNodeClick(gadget, domElement);
     //waitForNodeClick(gadget, domElement, class_definition);
 
@@ -742,7 +727,6 @@
       coordinate.left,
       coordinate.top
     );
-    console.log("addNODE 6");
     box.css("top", absolute_position[1]);
     box.css("left", absolute_position[0]);
     updateNodeStyle(gadget, dom_element_id);
@@ -783,9 +767,7 @@
     function resolver(resolve, reject) {
       console.log("wait for DROP resolver1");
       callback = function (evt) {
-        console.log("wait for DROP resolver2");
         try {
-          console.log("wait for DROP resolver3");
           var class_name = JSON.parse(
               evt.dataTransfer.getData('application/json')
             ),
@@ -795,10 +777,6 @@
               evt.clientX - offset.left + "px",
               evt.clientY - offset.top + "px"
             );
-          console.log("wait for DROP resolver4");
-          console.log(class_name);
-          console.log(offset);
-          console.log(relative_position);
           addNode(gadget,
             generateNodeId(gadget, {_class: class_name}),
             {
@@ -808,7 +786,6 @@
               },
               _class: class_name
             });
-          console.log("wait for DROP resolver5");
         } catch (e) {
           console.log("wait for DROP resolver100");
           reject(e);
@@ -896,6 +873,7 @@
         ],
         Container: this.props.main
       });
+      console.log("startservice WORKFLOW EDITOR2");
       draggable(gadget);
       this.props.nodes_click_monitor = RSVP.Monitor();
       // load the data
@@ -903,12 +881,12 @@
       $.each(this.props.data.graph.node, function (key, value) {
         addNode(gadget, key, value);
       });
+      console.log("startservice WORKFLOW EDITOR3");
       //$.each(this.props.data.graph.main_graph.edge, function (key, value) {
       $.each(this.props.data.graph.edge, function (key, value) {
         addEdge(gadget, key, value);
       });
-      console.log("startservice WORKFLOW EDITOR7");
-
+      console.log("startservice WORKFLOW EDITOR4");
       return RSVP.all([
         waitForDrop(gadget),
         waitForConnection(gadget),
@@ -917,5 +895,6 @@
         gadget.props.nodes_click_monitor
       ]);
     });
+
 }(RSVP, rJS, $, jsPlumb, Handlebars, loopEventListener,
 promiseEventListener, DOMParser));
