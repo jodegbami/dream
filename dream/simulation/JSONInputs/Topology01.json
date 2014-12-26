@@ -38,6 +38,7 @@
                                         "mean": 5
                                    }
                               }, 
+                              "_class": "Dream.Failure", 
                               "TTF": {
                                    "Fixed": {
                                         "mean": 60
@@ -71,6 +72,7 @@
                                         "mean": 10
                                    }
                               }, 
+                              "_class": "Dream.Failure", 
                               "TTF": {
                                    "Fixed": {
                                         "mean": 40
@@ -145,10 +147,10 @@
      }, 
      "_class": "Dream.Simulation", 
      "general": {
-          "maxSimTime": "1440", 
+          "trace": "No", 
           "_class": "Dream.Configuration", 
           "confidenceLevel": "0.95", 
-          "trace": "No", 
+          "maxSimTime": "1440", 
           "numberOfReplications": "1"
      }
 }

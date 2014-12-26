@@ -34,12 +34,13 @@ from ObjectInterruption import ObjectInterruption
 
 class Failure(ObjectInterruption):
     
-    def __init__(self, id='',name='',victim=None, distribution={}, index=0, repairman=None, offshift=False,
+    def __init__(self, id='',name='',victim=None, TTF={'Fixed':{'mean':100}},TTR={'Fixed':{'mean':10}}, index=0,
+                 repairman=None, offshift=False,
                  deteriorationType='constant',
                  waitOnTie=False,**kw):
         ObjectInterruption.__init__(self,id,name,victim=victim)
-        self.rngTTF=RandomNumberGenerator(self, distribution.get('TTF',{'Fixed':{'mean':100}}))
-        self.rngTTR=RandomNumberGenerator(self, distribution.get('TTR',{'Fixed':{'mean':10}}))
+        self.rngTTF=RandomNumberGenerator(self, TTF)
+        self.rngTTR=RandomNumberGenerator(self, TTR)
         self.name="F"+str(index)
         self.repairman=repairman        # the resource that may be needed to fix the failure
                                         # if now resource is needed this will be "None" 

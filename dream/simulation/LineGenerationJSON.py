@@ -271,6 +271,7 @@ def createObjectInterruptions():
             objectInterruption=objectType(**inputDict)
             G.ObjectInterruptionList.append(objectInterruption)
     
+    
     # search inside the nodes for encapsulated ObjectInterruptions (failures etc)
     # ToDo this will be cleaned a lot if we update the JSON notation:
     # define ObjectInterruption echelon inside node
@@ -281,59 +282,71 @@ def createObjectInterruptions():
     from dream.simulation.ShiftScheduler import ShiftScheduler
     for (element_id, element) in nodes.iteritems():
         element['id'] = element_id
-        scheduledMaintenance=element.get('interruptions',{}).get('scheduledMaintenance', {})
-        # if there is a scheduled maintenance initiate it and append it
-        # to the interruptions- and scheduled maintenances- list
-        if len(scheduledMaintenance):
-            start=float(scheduledMaintenance.get('start', 0))
-            duration=float(scheduledMaintenance.get('duration', 1))
-            victim=Globals.findObjectById(element['id'])
-            SM=ScheduledMaintenance(victim=victim, start=start, duration=duration)
-            G.ObjectInterruptionList.append(SM)
-            G.ScheduledMaintenanceList.append(SM)
-        failure=element.get('interruptions',{}).get('failure', None)
-        # if there are failures assigned 
-        # initiate them   
-        if failure:
-            victim=Globals.findObjectById(element['id'])
-            deteriorationType=failure.get('deteriorationType', 'constant')
-            waitOnTie=failure.get('waitOnTie', False)
-            F=Failure(victim=victim, distribution=failure, repairman=victim.repairman, deteriorationType=deteriorationType,
-                      waitOnTie=waitOnTie)
-            G.ObjectInterruptionList.append(F)
-            G.FailureList.append(F)
-        # if there are periodic maintenances assigned 
-        # initiate them   
-        periodicMaintenance=element.get('interruptions',{}).get('periodicMaintenance', None)
-        if periodicMaintenance:
-            distributionType=periodicMaintenance.get('distributionType', 'No')
-            victim=Globals.findObjectById(element['id'])
-            PM=PeriodicMaintenance(victim=victim, distribution=periodicMaintenance, repairman=victim.repairman)
-            G.ObjectInterruptionList.append(PM)
-            G.PeriodicMaintenanceList.append(PM)
-        # if there is a shift pattern defined 
-        # initiate them             
-        shift=element.get('interruptions',{}).get('shift', {})
-        if len(shift):
-            victim=Globals.findObjectById(element['id'])
-            shiftPattern=list(shift.get('shiftPattern', []))
-            # patch to correct if input has end of shift at the same time of start of next shift
-            # TODO check if the backend should be able to handle this
-            for index, element in enumerate(shiftPattern):
-                if element is shiftPattern[-1]:
-                    break
-                next = shiftPattern[index + 1]
-                if element[1]==next[0]:
-                    element[1]=next[1]
-                    shiftPattern.remove(next)
-            endUnfinished=bool(int(shift.get('endUnfinished', 0)))
-            receiveBeforeEndThreshold=float(shift.get('receiveBeforeEndThreshold', 0))
-            thresholdTimeIsOnShift=bool(int(shift.get('thresholdTimeIsOnShift', 1)))
-            SS=ShiftScheduler(victim=victim, shiftPattern=shiftPattern, endUnfinished=endUnfinished, 
-                              receiveBeforeEndThreshold=receiveBeforeEndThreshold,
-                              thresholdTimeIsOnShift=thresholdTimeIsOnShift)
-            G.ObjectInterruptionList.append(SS)
-            G.ShiftSchedulerList.append(SS)
+        interruptionsDict=element.get('interruptions',{})
+        for (interruption_id, interruption) in interruptionsDict.iteritems():
+            interruptionClass = interruption.pop('_class')
+            interruptionType=Globals.getClassFromName(interruptionClass)
+            victim=Globals.findObjectById(element['id']) 
+            inputDict=dict(interruption)  
+            inputDict['victim']=victim       
+            inputDict['repairman']=victim.repairman     
+            # create the interruption
+            objectInterruption=interruptionType(**inputDict)
+            G.ObjectInterruptionList.append(objectInterruption)
+            
+#         scheduledMaintenance=element.get('interruptions',{}).get('scheduledMaintenance', {})
+#         # if there is a scheduled maintenance initiate it and append it
+#         # to the interruptions- and scheduled maintenances- list
+#         if len(scheduledMaintenance):
+#             start=float(scheduledMaintenance.get('start', 0))
+#             duration=float(scheduledMaintenance.get('duration', 1))
+#             victim=Globals.findObjectById(element['id'])
+#             SM=ScheduledMaintenance(victim=victim, start=start, duration=duration)
+#             G.ObjectInterruptionList.append(SM)
+#             G.ScheduledMaintenanceList.append(SM)
+#         failure=element.get('interruptions',{}).get('failure', None)
+#         # if there are failures assigned 
+#         # initiate them   
+#         if failure:
+#             victim=Globals.findObjectById(element['id'])
+#             deteriorationType=failure.get('deteriorationType', 'constant')
+#             waitOnTie=failure.get('waitOnTie', False)
+#             F=Failure(victim=victim, distribution=failure, repairman=victim.repairman, deteriorationType=deteriorationType,
+#                       waitOnTie=waitOnTie)
+#             G.ObjectInterruptionList.append(F)
+#             G.FailureList.append(F)
+#         # if there are periodic maintenances assigned 
+#         # initiate them   
+#         periodicMaintenance=element.get('interruptions',{}).get('periodicMaintenance', None)
+#         if periodicMaintenance:
+#             distributionType=periodicMaintenance.get('distributionType', 'No')
+#             victim=Globals.findObjectById(element['id'])
+#             PM=PeriodicMaintenance(victim=victim, distribution=periodicMaintenance, repairman=victim.repairman)
+#             G.ObjectInterruptionList.append(PM)
+#             G.PeriodicMaintenanceList.append(PM)
+#         # if there is a shift pattern defined 
+#         # initiate them             
+#         shift=element.get('interruptions',{}).get('shift', {})
+#         if len(shift):
+#             victim=Globals.findObjectById(element['id'])
+#             shiftPattern=list(shift.get('shiftPattern', []))
+#             # patch to correct if input has end of shift at the same time of start of next shift
+#             # TODO check if the backend should be able to handle this
+#             for index, element in enumerate(shiftPattern):
+#                 if element is shiftPattern[-1]:
+#                     break
+#                 next = shiftPattern[index + 1]
+#                 if element[1]==next[0]:
+#                     element[1]=next[1]
+#                     shiftPattern.remove(next)
+#             endUnfinished=bool(int(shift.get('endUnfinished', 0)))
+#             receiveBeforeEndThreshold=float(shift.get('receiveBeforeEndThreshold', 0))
+#             thresholdTimeIsOnShift=bool(int(shift.get('thresholdTimeIsOnShift', 1)))
+#             SS=ShiftScheduler(victim=victim, shiftPattern=shiftPattern, endUnfinished=endUnfinished, 
+#                               receiveBeforeEndThreshold=receiveBeforeEndThreshold,
+#                               thresholdTimeIsOnShift=thresholdTimeIsOnShift)
+#             G.ObjectInterruptionList.append(SS)
+#             G.ShiftSchedulerList.append(SS)
 
 
 # ===========================================================================
