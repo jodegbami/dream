@@ -126,7 +126,7 @@ class OldStylePartJobShopWIP(plugin.InputPreparationPlugin):
       processing_time_list = processing_time_list.split('-')
 
       order_dict["_class"] = "Dream.Order"
-      order_dict["id"] = "%i" % i # XXX hack, we use it in UI to retrieve spreadsheet line
+      order_dict["id"] = order_id #"%i" % i # XXX hack, we use it in UI to retrieve spreadsheet line
       order_dict["manager"] = project_manager
       order_dict["name"] = order_id
       order_dict["dueDate"] = due_date
@@ -142,7 +142,7 @@ class OldStylePartJobShopWIP(plugin.InputPreparationPlugin):
           value_list = data['input'][input_id][i]
           if value_list[4] in (None, ''):
             break
-          order_id, due_date, priority, project_manager, part, part_type,\
+          _order_id, due_date, priority, project_manager, part, part_type,\
             sequence_list, processing_time_list, prerequisite_string = value_list
           sequence_list = sequence_list.split('-')
           prerequisite_list = self.getListFromString(prerequisite_string)
@@ -152,7 +152,8 @@ class OldStylePartJobShopWIP(plugin.InputPreparationPlugin):
           if part_type == "Mould":
             component_dict["_class"] = "Dream.Mould"
           component_dict["componentType"] = part_type
-          component_dict["id"] = "%i" % i # XXX hack, we use it in UI to retrieve spreadsheet line
+          component_dict["id"] = "%s/%s" % ( order_id, part) # "%i" % i # XXX hack, we use it in UI to retrieve spreadsheet line
+          component_dict["order_id"] = order_id
           component_dict["name"] = part
           component_list.append(component_dict)
           route_list = self.getRouteList(sequence_list, processing_time_list,
