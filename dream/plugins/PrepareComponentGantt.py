@@ -8,15 +8,15 @@ class PrepareComponentGantt(plugin.OutputPreparationPlugin):
   def postprocess(self, data):
     """Post process the data for Gantt gadget
     Gantt expect data in the following format:
-      
+      time_unit: XXX minutes ? hour or day http://docs.dhtmlx.com/gantt/api__gantt_scale_unit_config.html
       data: [
           {
             id: "order_1", # an unique id
             text: "First Order", # the text to display
-            start_date: start_date, # the date in ISO format
-            duration: 100, # the duration in XXX seconds ?
-            project: 1, # if this is true, this line will contains some other lines
-            open: true # 
+            start_date: start_date, # the date as string in ISO8601 / http://www.w3.org/TR/NOTE-datetime
+            duration: 100, # the duration in time unit 
+            project: true,
+            open: true 
           },
           {
             id: "line_from_order_1",
@@ -26,10 +26,7 @@ class PrepareComponentGantt(plugin.OutputPreparationPlugin):
             parent: "order_1",    # id of the parent
             open: false
           }
-        ],
-      gantt_config :
-        # Zoom level (day, month etc)
-        # 
+        ]
         
     """
     self.logger.info("%s: %s" % (self.configuration_dict, pformat(data)))
@@ -41,8 +38,7 @@ class PrepareComponentGantt(plugin.OutputPreparationPlugin):
 
     self.logger.info("families: %s" % set([element.get('family') for element in result['elementList']]))
     jobs = {}
-    gantt_data = [
-    ]
+    gantt_data = []
     for job in [element for element in result['elementList'] if element.get('family') == 'Job']:
       self.logger.info("Job %s" % job)
       #assert job['id'] not in jobs, (pformat(job) + pformat(jobs[job['id']]))
